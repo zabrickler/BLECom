@@ -59,7 +59,8 @@ response2 = 'N'
 ack1 = True
 ack2 = True
 
-while ack1 or ack2: if not(response1 == b'A'):
+while ack1 or ack2: 
+    if not(response1 == b'A'):
         print("SENDING DATA TO MOTION\n")
         ser1.write(b'A')
         ser1.write(b'B')

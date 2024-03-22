@@ -9,12 +9,8 @@ async def hello_sender(ble: BLE_interface):
     for x in range(10):
         await asyncio.sleep(1.0)
         print("Sending...")
-        ble.queue_send(b"i")
-    init = time.time()        
+        ble.queue_send(b"i")       
     await ble.disconnect()
-    fin = time.time()
-    diff = fin - init
-    print('Execution time ', diff, ' seconds')
 
 async def main():
     ADAPTER = "hci0"
@@ -27,12 +23,8 @@ async def main():
     ble.set_receiver(receive_callback)
 
     try:
-        st = time.time()
         await ble.connect(DEVICE, "public", 10.0)
         await ble.setup_chars(WRITE_UUID, READ_UUID, "rw")
-        et = time.time()
-        el = et - st
-        print('Execution time', el, 'seconds')
         await asyncio.gather(ble.send_loop(), hello_sender(ble))
     finally:
        # await ble.disconnect()
