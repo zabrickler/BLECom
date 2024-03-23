@@ -8,28 +8,40 @@ from ble_serial.scan import main as scanner
 import subprocess
 import logging
 from ble_serial.bluetooth.ble_interface import BLE_interface
-##########################################################
-#HOW DOES THE RECEIVE CALLBACK WORK WITH MULTIPLE DEVICES#
-##########################################################
-#CAN I SETUP MULTIPLE BLE_INTERFACES
+
+ble1 = None
+ble2 = None
+ble3 = None
 
 #This is called when the device receives data
-def receive_callback(value: bytes):
-    print("Received", value)
+def motion_callback(value: bytes):
+    print("Motion Message", value)
+    
     #Logs it in file
+    motionData = motionData + value
+    print(motionData)
 
-async def sender(ble:BLE_interface):
-    ble.queue_send(b"Hello world\n")
-    ble.disconnect()
+def window_callback(value: bytes):
+    print("Window Message", value)
+
+def door_callback(value: bytes):
+    print("Door Message", value)
 
 #Sends back an acknowledgement when it receives activity
 #Not sure if I need to async this
 def acknowledge(ble: BLE_interface):
-    pass
+    while True:
+        print("Sending...")
+        ble.queue_send(b'A')
 
 async def connection(device, rwuuid, adapter, suuid):
     ble = BLE_interface(adapter, suuid)
-    ble.set_receiver(receive_callback)
+    if(device == "44:B7:D0:2C:D3:0A"):
+        ble.set_receiver(motion_callback)
+    elif(device == "44:B7:D0:2D:6A:B3"):
+        ble.set_receiver(window_callback)
+    else:
+        ble.set_receiver(door_callback)
     try:
         await ble.connect(device, "public", 10.0)
         await ble.setup_chars(rwuuid, rwuuid, "rw")
@@ -40,8 +52,10 @@ async def connection(device, rwuuid, adapter, suuid):
     return ble
 
 async def main():
+    global motionData
+    motionData = b''
     ADAPTER = "hci0"
-    SCAN_TIME = 5 
+    SCAN_TIME = 1 
     SERVICE_UUID = None
     uuid = "49535343-1e4d-4bd9-ba61-23c647249616"
     Checking = True
@@ -58,6 +72,7 @@ async def main():
                 #Checking = False #Might not need this if it awaits for the connection
                 #Make this into a thread
                 #Lines 25 - 31 of serialExample.py
+                global ble1
                 ble1 = await connection(device1, uuid, ADAPTER, SERVICE_UUID)
                 print(ble1)
             except KeyError:
@@ -65,6 +80,7 @@ async def main():
                     print(devices[device2])
                     #Checking = False
                     #Make this into a thread
+                    global ble2
                     ble2 = await connection(device2, uuid, ADAPTER, SERVICE_UUID)
                     print(ble2)
                 except KeyError:
@@ -72,10 +88,16 @@ async def main():
                         print(devices[device3])
                         #Checking = False
                         #Make this into a thread
+                        global ble3
                         ble3 = await connection(device3, uuid, ADAPTER, SERVICE_UUID)
                         print(ble3)
                     except KeyError:
                         print("No device found")
+        
+            if(motionData == b'MD'):
+                print("Got here")
+                await asyncio.gather(ble1.send_loop(), acknowledge(ble1))
+                motionData = b''
 
 
 
