@@ -16,7 +16,7 @@ ble3 = None
 #This is called when the device receives data
 def motion_callback(value: bytes):
     print("Motion Message", value)
-    
+    global motionData
     #Logs it in file
     motionData = motionData + value
     print(motionData)
@@ -29,8 +29,9 @@ def door_callback(value: bytes):
 
 #Sends back an acknowledgement when it receives activity
 #Not sure if I need to async this
-def acknowledge(ble: BLE_interface):
+async def acknowledge(ble: BLE_interface):
     while True:
+        await asyncio.sleep(3.0)
         print("Sending...")
         ble.queue_send(b'A')
 
