@@ -46,7 +46,7 @@ async def acknowledge(ble: BLE_interface):
         await asyncio.sleep(3.0)
         print("Sending ack")
         ble.queue_send(b'A')
-        #ble.disconnect()
+        await ble.disconnect()
 
 async def disarmDev(ble: BLE_interface): #These are just for Motion right now
     global motionData
