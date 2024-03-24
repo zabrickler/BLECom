@@ -42,11 +42,11 @@ def door_callback(value: bytes):
 
 #Sends back an acknowledgement when it receives activity
 async def acknowledge(ble: BLE_interface):
-    while not(ble == None):
-        await asyncio.sleep(3.0)
-        print("Sending ack")
-        ble.queue_send(b'A')
-        await ble.disconnect()
+    #while not(ble == None):
+    await asyncio.sleep(3.0)
+    print("Sending ack")
+    ble.queue_send(b'AAAAAAA')
+    await ble.disconnect()
 
 async def disarmDev(ble: BLE_interface): #These are just for Motion right now
     global motionData
