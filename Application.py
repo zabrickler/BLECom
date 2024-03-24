@@ -8,6 +8,7 @@ from ble_serial.scan import main as scanner
 import subprocess
 import logging
 from ble_serial.bluetooth.ble_interface import BLE_interface
+import bleak
 
 ble1 = None
 ble2 = None
@@ -45,6 +46,7 @@ async def acknowledge(ble: BLE_interface):
         await asyncio.sleep(3.0)
         print("Sending ack")
         ble.queue_send(b'A')
+        #ble.disconnect()
 
 async def disarmDev(ble: BLE_interface): #These are just for Motion right now
     global motionData
@@ -129,6 +131,8 @@ async def main():
                     activityLog.write("Motion activity: " + str(theTime[1]) + "/" + str(theTime[2]) + "/" + str(theTime[0]) + "/" + str(theTime[1]) + " " + str(theTime[3]) + ":" + str(theTime[4]) + "\n")
                     try:
                         await asyncio.gather(ble1.send_loop(), acknowledge(ble1))
+                    except bleak.BleakError as e:
+                        print("Bleak error")
                     finally:
                         await ble1.disconnect()
                     motionData = b''
@@ -138,6 +142,8 @@ async def main():
                     activityLog.write("Window activity: " + str(theTime[1]) + "/" + str(theTime[2]) + "/" + str(theTime[0]) + "/" + str(theTime[1]) + " " + str(theTime[3]) + ":" + str(theTime[4]) + "\n")
                     try:
                         await asyncio.gather(ble2.send_loop(), acknowledge(ble2))
+                    except bleak.BleakError as e:
+                        print("Bleak error")
                     finally:
                         await ble2.disconnect()
                     windowData = b''
@@ -147,6 +153,8 @@ async def main():
                     activityLog.write("Door activity: " + str(theTime[1]) + "/" + str(theTime[2]) + "/" + str(theTime[0]) + "/" + str(theTime[1]) + " " + str(theTime[3]) + ":" + str(theTime[4]) + "\n")
                     try:
                         await asyncio.gather(ble3.send_loop(), acknowledge(ble3))
+                    except bleak.BleakError as e:
+                        print("Bleak error")
                     finally:
                        await ble3.disconnect()
                     doorData = b''
