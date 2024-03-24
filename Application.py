@@ -17,18 +17,25 @@ ble3 = None
 def motion_callback(value: bytes):
     print("Motion Message", value)
     global motionData
-    #Logs it in file
+
     motionData = motionData + value
     print(motionData)
 
 def window_callback(value: bytes):
     print("Window Message", value)
+    global windowData
+
+    windowData = windowData + value
+    print(windowData)
 
 def door_callback(value: bytes):
     print("Door Message", value)
+    global doorData
+
+    doorData = doorData + value
+    print(doorData)
 
 #Sends back an acknowledgement when it receives activity
-#Not sure if I need to async this
 async def acknowledge(ble: BLE_interface):
     while True:
         await asyncio.sleep(3.0)
@@ -55,6 +62,12 @@ async def connection(device, rwuuid, adapter, suuid):
 async def main():
     global motionData
     motionData = b''
+    global windowData
+    windowData = b''
+    global doorData
+    doorData = b''
+    activityLog = open("activityLog.txt", "a")
+
     ADAPTER = "hci0"
     SCAN_TIME = 1 
     SERVICE_UUID = None
@@ -95,15 +108,23 @@ async def main():
                     except KeyError:
                         print("No device found")
         
-            if(motionData == b'MD'):
-                print("Got here")
+            if b'MD' in motionData:
+                print("Motion activity")
+                activityLog.write("Motion activity: ", time.time())
                 await asyncio.gather(ble1.send_loop(), acknowledge(ble1))
                 motionData = b''
 
+            if b'PLACEHOLDER' in windowData:
+                print("Window activity")
+                activityLog.write("Window activity: ", time.time())
+                await asyncio.gather(ble2.send_loop(), acknowledge(ble2))
+                windowData = b''
 
-
-
-
+            if b'DO' in doorData:
+                print("Door activity")
+                activityLog.write("Door activity: ", time.time())
+                await asyncio.gather(ble3.send_loop(), acknowledge(ble3))
+                doorData = b''
 
 if __name__ == "__main__":
     logging.basicConfig(level = logging.INFO)
