@@ -111,19 +111,19 @@ async def main():
             if b'MD' in motionData:
                 print("Motion activity")
                 theTime = time.localtime()
-                activityLog.write("Motion activity: " + theTime[1] + "/" + theTime[2] + "/" + theTime[0] + "/" + theTime[1] + " " + theTime[3] + ":" + theTime[4] + "\n")
+                activityLog.write("Motion activity: " + str(theTime[1]) + "/" + str(theTime[2]) + "/" + str(theTime[0]) + "/" + str(theTime[1]) + " " + str(theTime[3]) + ":" + str(theTime[4]) + "\n")
                 await asyncio.gather(ble1.send_loop(), acknowledge(ble1))
                 motionData = b''
 
             if b'PLACEHOLDER' in windowData:
                 print("Window activity")
-                activityLog.write("Window activity: " + theTime[1] + "/" + theTime[2] + "/"  + theTime[0] + "/" + theTime[1] + " " + theTime[3] + ":" + theTime[4] + "\n")
+                activityLog.write("Window activity: " + str(theTime[1]) + "/" + str(theTime[2]) + "/" + str(theTime[0]) + "/" + str(theTime[1]) + " " + str(theTime[3]) + ":" + str(theTime[4]) + "\n")
                 await asyncio.gather(ble2.send_loop(), acknowledge(ble2))
                 windowData = b''
 
             if b'DO' in doorData:
                 print("Door activity")
-                activityLog.write("Door activity: " + theTime[1] + "/" + theTime[2] + "/"  + theTime[0] + "/" + theTime[1] + " " + theTime[3] + ":" + theTime[4] + "\n")
+                activityLog.write("Door activity: " + str(theTime[1]) + "/" + str(theTime[2]) + "/" + str(theTime[0]) + "/" + str(theTime[1]) + " " + str(theTime[3]) + ":" + str(theTime[4]) + "\n")
                 await asyncio.gather(ble3.send_loop(), acknowledge(ble3))
                 doorData = b''
 
