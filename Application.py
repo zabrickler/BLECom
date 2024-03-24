@@ -42,7 +42,7 @@ def door_callback(value: bytes):
 
 #Sends back an acknowledgement when it receives activity
 async def acknowledge(ble: BLE_interface):
-    while True:
+    while not(ble == None):
         await asyncio.sleep(3.0)
         print("Sending ack")
         ble.queue_send(b'A')
@@ -136,6 +136,7 @@ async def main():
                     finally:
                         await ble1.disconnect()
                     motionData = b''
+                    ble1 = None
 
                 if b'PLACEHOLDER' in windowData:
                     print("Window activity")
@@ -147,6 +148,7 @@ async def main():
                     finally:
                         await ble2.disconnect()
                     windowData = b''
+                    ble2 = None
 
                 if b'DO' in doorData:
                     print("Door activity")
@@ -158,6 +160,7 @@ async def main():
                     finally:
                        await ble3.disconnect()
                     doorData = b''
+                    ble3 = None
             
             if(not(PiArmedState) and DevicesArmedState):
                 if not(motionData == b''):
