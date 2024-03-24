@@ -1,0 +1,16 @@
+asyncio.run(main())
+  File "/usr/lib/python3.9/asyncio/runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "/usr/lib/python3.9/asyncio/base_events.py", line 642, in run_until_complete
+    return future.result()
+  File "/home/zabrickler20/BLEComFolder/BLECom/Application.py", line 131, in main
+    await asyncio.gather(ble1.send_loop(), acknowledge(ble1))
+  File "/home/zabrickler20/.local/lib/python3.9/site-packages/ble_serial/bluetooth/ble_interface.py", line 104, in send_loop
+    await self.dev.write_gatt_char(self.write_char, data)
+  File "/home/zabrickler20/.local/lib/python3.9/site-packages/bleak/__init__.py", line 776, in write_gatt_char
+    await self._backend.write_gatt_char(characteristic, data, response)
+  File "/home/zabrickler20/.local/lib/python3.9/site-packages/bleak/backends/bluezdbus/client.py", line 861, in write_gatt_char
+    assert_reply(reply)
+  File "/home/zabrickler20/.local/lib/python3.9/site-packages/bleak/backends/bluezdbus/utils.py", line 22, in assert_reply
+    raise BleakDBusError(reply.error_name, reply.body)
+bleak.exc.BleakDBusError: [org.bluez.Error.Failed] Operation failed with ATT error: 0x0e (Unlikely Error)

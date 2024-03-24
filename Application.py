@@ -130,7 +130,7 @@ async def main():
                     try:
                         await asyncio.gather(ble1.send_loop(), acknowledge(ble1))
                     finally:
-                        ble1.disconnect()
+                        await ble1.disconnect()
                     motionData = b''
 
                 if b'PLACEHOLDER' in windowData:
@@ -139,7 +139,7 @@ async def main():
                     try:
                         await asyncio.gather(ble2.send_loop(), acknowledge(ble2))
                     finally:
-                        ble2.disconnect()
+                        await ble2.disconnect()
                     windowData = b''
 
                 if b'DO' in doorData:
@@ -148,7 +148,7 @@ async def main():
                     try:
                         await asyncio.gather(ble3.send_loop(), acknowledge(ble3))
                     finally:
-                        ble3.disconnect()
+                       await ble3.disconnect()
                     doorData = b''
             
             if(not(PiArmedState) and DevicesArmedState):
