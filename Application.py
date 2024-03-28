@@ -56,6 +56,17 @@ async def disarmDev(ble: BLE_interface): #These are just for Motion right now
         ble.queue_send(b'DSM')
     ble.disconnect()
 
+async def disarmDoor(ble: BLE_interface):
+    print("We are in disarm")
+    global doorData
+    while not(b'A' in doorData):
+        await asyncio.sleep(3.0)
+        print("Sending disarm")
+        #if(b'A' in doorData):
+        ble.queue_send(b'DSD')
+        #ble.queue_send(b'RSD')
+    await ble.disconnect()
+
 async def armDev(ble: BLE_interface):
     while True:
         await asyncio.sleep(3.0)
@@ -87,7 +98,7 @@ async def main():
     global doorData
     doorData = b''
     activityLog = open("activityLog.txt", "a")
-    PiArmedState = True
+    PiArmedState = False
     DevicesArmedState = True
 
     ADAPTER = "hci0"
@@ -152,6 +163,7 @@ async def main():
 
                 if b'DO' in doorData:
                     print("Door activity")
+                    theTime = time.localtime()
                     activityLog.write("Door activity: " + str(theTime[1]) + "/" + str(theTime[2]) + "/" + str(theTime[0]) + "/" + str(theTime[1]) + " " + str(theTime[3]) + ":" + str(theTime[4]) + "\n")
                     try:
                         await asyncio.gather(ble3.send_loop(), acknowledge(ble3))
@@ -168,11 +180,13 @@ async def main():
 
                 if not(windowData == b''):
                     await asyncio.gather(ble2.send_loop(), disarmDev(ble2))
-
-                if not(doorData == b''):
-                    await asyncio.gather(ble3.send_loop(), disarmDev(ble3))
                 
-                DevicesArmedState = False
+                print("Do we get here")
+                    
+                if not(ble3 == None):
+                    await asyncio.gather(ble3.send_loop(), disarmDoor(ble3))
+                    doorData = b''
+                #DevicesArmedState = False
 
             if(PiArmedState and not(DevicesArmedState)):
                 pass
