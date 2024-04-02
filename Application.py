@@ -170,6 +170,14 @@ async def main():
                     except KeyError:
                         print("No device found")
 
+            response = requests.get(dbURL)
+            data = response.json()
+            ArmedStatus = data[0].get('status')
+            if(ArmedStatus == 'Arm'):
+                PiArmedState = True
+            elif(ArmedStatus == 'Disarm'):
+                PiArmedState = False
+
             if(PiArmedState and DevicesArmedState):        
                 if b'MD' in motionData:
                     print("Motion activity")
@@ -212,14 +220,6 @@ async def main():
                        await ble3.disconnect()
                     doorData = b''
                     ble3 = None
-            
-            response = requests.get(dbURL)
-            data = response.json()
-            ArmedStatus = data[0].get('status')
-            if(ArmedStatus == 'Arm'):
-                PiArmedState = True
-            elif(ArmedStatus == 'Disarm'):
-                PiArmedState = False
 
             if(not(PiArmedState) and DevicesArmedState):
                 if not(ble1 == None):
