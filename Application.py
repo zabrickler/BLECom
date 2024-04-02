@@ -20,6 +20,9 @@ ble3 = None
 ###################################################################
 #Might need to separate the logic from the scanning and connecting#
 ###################################################################
+###################################################
+#ENSURE THAT ALL THE DEVICES ARE DISARMED OR ARMED#
+###################################################
 
 #This is called when the device receives data
 def motion_callback(value: bytes):
@@ -48,7 +51,7 @@ async def acknowledge(ble: BLE_interface):
     ble.queue_send(b'AAAAAAA')
     await ble.disconnect()
 
-async def disarmDev(ble: BLE_interface): #These are just for Motion right now
+async def disarmMotion(ble: BLE_interface): #These are just for Motion right now
     global motionData
     while not(b'A' in motionData):
         await asyncio.sleep(3.0)
@@ -67,11 +70,40 @@ async def disarmDoor(ble: BLE_interface):
         #ble.queue_send(b'RSD')
     await ble.disconnect()
 
-async def armDev(ble: BLE_interface):
-    while True:
+async def disarmWindow(ble: BLE_interface):
+    print("We are in disarm")
+    global windowData
+    while not(b'A' in windowData):
+        await asyncio.sleep(3.0)
+        print("Sending disarm")
+        #if(b'A' in windowData):
+        ble.queue_send(b'PLACEHOLDER')
+        #ble.queue_send(b'PLACEHOLDER')
+    await ble.disconnect()
+
+async def armMotion(ble: BLE_interface):
+    global motionData
+    while not(b'A' in motionData):
         await asyncio.sleep(3.0)
         print("Sending arm")
         ble.queue_send(b'RSM')
+    await ble.disconnect()
+
+async def armDoor(ble: BLE_interface):
+    global doorData
+    while not(b'A' in doorData):
+        await asyncio.sleep(3.0)
+        print("Sending Arm")
+        ble.queue_send(b'RSD')
+    await ble.disconnect()
+
+async def armWindow(ble: BLE_interface):
+    global windowData
+    while not(b'A' in windowData):
+        await asyncio.sleep(3.0)
+        print("Sending Arm")
+        ble.queue_send(b'PLACEHOLDER')
+    await ble.disconnect()
 
 async def connection(device, rwuuid, adapter, suuid):
     ble = BLE_interface(adapter, suuid)
@@ -175,24 +207,39 @@ async def main():
                     ble3 = None
             
             if(not(PiArmedState) and DevicesArmedState):
-                if not(motionData == b''):
-                    await asyncio.gather(ble1.send_loop(), disarmDev(ble1))
+                if not(ble1 == None):
+                    await asyncio.gather(ble1.send_loop(), disarmMotion(ble1))
+                    motionData = b''
+                    ble1 = None
 
-                if not(windowData == b''):
-                    await asyncio.gather(ble2.send_loop(), disarmDev(ble2))
-                
+                if not(ble2 == None):
+                    await asyncio.gather(ble2.send_loop(), disarmWindow(ble2))
+                    windowData = b''
+                    ble2 = None
                 print("Do we get here")
                     
                 if not(ble3 == None):
                     await asyncio.gather(ble3.send_loop(), disarmDoor(ble3))
                     doorData = b''
+                    ble3 = None
                 #DevicesArmedState = False
 
             if(PiArmedState and not(DevicesArmedState)):
-                pass
-                #How do I know when it is connected
-                     
-
+                if not(ble1 == None):
+                    await asyncio.gather(ble1.send_loop(), armMotion(ble1))
+                    motionData = b''
+                    ble1 = None
+                
+                if not(ble2 == None):
+                    await asyncio.gather(ble2.send_loop(), armWindow(ble2))
+                    windowData = b''
+                    ble2 = None
+                
+                if not(ble3 == None):
+                    await asyncio.gather(ble3.send_loop(), armDoor(ble3))
+                    doorData = b''
+                    ble3 = None
+                    
 if __name__ == "__main__":
     logging.basicConfig(level = logging.INFO)
     asyncio.run(main())
