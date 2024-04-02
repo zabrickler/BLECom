@@ -136,6 +136,10 @@ async def main():
     notifyURL = 'https://maker.ifttt.com/trigger/Motion_detected/json/with/key/drkDV7BLk5F_sqrYTDTwbW'
     dbURL = 'https://home-security-90ecb2cf8b83.herokuapp.com/securitystatus'
 
+    doorCheckInTime = time.time()
+    windowCheckInTime = time.time()
+    motionCheckInTime = time.time()
+
     ADAPTER = "hci0"
     SCAN_TIME = 1 
     SERVICE_UUID = None
@@ -153,18 +157,21 @@ async def main():
                 print(devices[device1])
                 #Checking = False #Might not need this if it awaits for the connection
                 global ble1
+                motionCheckInTime = time.time()
                 ble1 = await connection(device1, uuid, ADAPTER, SERVICE_UUID)
                 print(ble1)
             except KeyError:
                 try:
                     print(devices[device2])
                     global ble2
+                    windowCheckInTime = time.time()
                     ble2 = await connection(device2, uuid, ADAPTER, SERVICE_UUID)
                     print(ble2)
                 except KeyError:
                     try:
                         print(devices[device3])
                         global ble3
+                        doorCheckInTime = time.time()
                         ble3 = await connection(device3, uuid, ADAPTER, SERVICE_UUID)
                         print(ble3)
                     except KeyError:
@@ -255,6 +262,17 @@ async def main():
                     await asyncio.gather(ble3.send_loop(), armDoor(ble3))
                     doorData = b''
                     ble3 = None
+
+            #Health Check every 5 minutes
+            if((time.time() - motionCheckInTime) > 300):
+                requests.post(notifyURL)
+                #WANT TO LOG IN FILE THAT HEALTH CHECK FAILED
+
+            if((time.time() - windowCheckInTime) > 300):
+                requests.post(notifyURL)
+
+            if((time.time() - doorCheckInTime) > 300):
+                requests.post(notifyURL)
 
 if __name__ == "__main__":
     logging.basicConfig(level = logging.INFO)
