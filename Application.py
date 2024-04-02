@@ -9,6 +9,7 @@ import subprocess
 import logging
 from ble_serial.bluetooth.ble_interface import BLE_interface
 import bleak
+import requests
 
 ble1 = None
 ble2 = None
@@ -130,8 +131,10 @@ async def main():
     global doorData
     doorData = b''
     activityLog = open("activityLog.txt", "a")
-    PiArmedState = False
+    PiArmedState = True
     DevicesArmedState = True
+    notifyURL = 'https://maker.ifttt.com/trigger/Motion_detected/json/with/key/drkDV7BLk5F_sqrYTDTwbW'
+    dbURL = 'https://home-security-90ecb2cf8b83.herokuapp.com/securitystatus'
 
     ADAPTER = "hci0"
     SCAN_TIME = 1 
@@ -171,6 +174,7 @@ async def main():
                 if b'MD' in motionData:
                     print("Motion activity")
                     theTime = time.localtime()
+                    requests.post(notifyURL)
                     activityLog.write("Motion activity: " + str(theTime[1]) + "/" + str(theTime[2]) + "/" + str(theTime[0]) + "/" + str(theTime[1]) + " " + str(theTime[3]) + ":" + str(theTime[4]) + "\n")
                     try:
                         await asyncio.gather(ble1.send_loop(), acknowledge(ble1))
@@ -183,6 +187,8 @@ async def main():
 
                 if b'PLACEHOLDER' in windowData:
                     print("Window activity")
+                    theTime = time.localtime()
+                    requests.post(notifyURL)
                     activityLog.write("Window activity: " + str(theTime[1]) + "/" + str(theTime[2]) + "/" + str(theTime[0]) + "/" + str(theTime[1]) + " " + str(theTime[3]) + ":" + str(theTime[4]) + "\n")
                     try:
                         await asyncio.gather(ble2.send_loop(), acknowledge(ble2))
@@ -196,6 +202,7 @@ async def main():
                 if b'DO' in doorData:
                     print("Door activity")
                     theTime = time.localtime()
+                    requests.post(notifyURL)
                     activityLog.write("Door activity: " + str(theTime[1]) + "/" + str(theTime[2]) + "/" + str(theTime[0]) + "/" + str(theTime[1]) + " " + str(theTime[3]) + ":" + str(theTime[4]) + "\n")
                     try:
                         await asyncio.gather(ble3.send_loop(), acknowledge(ble3))
@@ -206,6 +213,14 @@ async def main():
                     doorData = b''
                     ble3 = None
             
+            response = requests.get(dbURL)
+            data = response.json()
+            ArmedStatus = data[0].get('status')
+            if(ArmedStatus == 'Arm'):
+                PiArmedState = True
+            elif(ArmedStatus == 'Disarm'):
+                PiArmedState = False
+
             if(not(PiArmedState) and DevicesArmedState):
                 if not(ble1 == None):
                     await asyncio.gather(ble1.send_loop(), disarmMotion(ble1))
@@ -223,6 +238,7 @@ async def main():
                     doorData = b''
                     ble3 = None
                 #DevicesArmedState = False
+                #THIS NEEDS TO BE IMPLEMENTED WHEN ALL ARE DISARMED
 
             if(PiArmedState and not(DevicesArmedState)):
                 if not(ble1 == None):
@@ -239,7 +255,7 @@ async def main():
                     await asyncio.gather(ble3.send_loop(), armDoor(ble3))
                     doorData = b''
                     ble3 = None
-                    
+
 if __name__ == "__main__":
     logging.basicConfig(level = logging.INFO)
     asyncio.run(main())
