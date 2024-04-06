@@ -130,7 +130,8 @@ async def main():
     MotionArmedState = True
     WindowArmedState = True
     DoorArmedState = True
-    notifyURL = 'https://maker.ifttt.com/trigger/Motion_detected/json/with/key/drkDV7BLk5F_sqrYTDTwbW'
+    notifyMessage = {'value1':"PLACEHOLDER"}
+    notifyURL = 'https://maker.ifttt.com/trigger/Timeout/with/key/drkDV7BLk5F_sqrYTDTwbW'
     dbURL = 'https://home-security-90ecb2cf8b83.herokuapp.com/securitystatus'
 
     doorCheckInTime = time.time()
@@ -189,7 +190,8 @@ async def main():
                 if b'MD' in motionData:
                     print("Motion activity")
                     theTime = time.localtime()
-                    requests.post(notifyURL)
+                    notifyMessage = {"value1":"Motion Sensor Activity"}
+                    requests.post(notifyURL, notifyMessage)
                     activityLog.write("Motion activity: " + str(theTime[1]) + "/" + str(theTime[2]) + "/" + str(theTime[0]) + "/" + str(theTime[1]) + " " + str(theTime[3]) + ":" + str(theTime[4]) + "\n")
                     try:
                         await asyncio.gather(ble1.send_loop(), acknowledge(ble1))
@@ -203,7 +205,8 @@ async def main():
                 if b'PLACEHOLDER' in windowData:
                     print("Window activity")
                     theTime = time.localtime()
-                    requests.post(notifyURL)
+                    notifyMessage = {"value1":"Window Sensor Activity"}
+                    requests.post(notifyURL, notifyMessage)
                     activityLog.write("Window activity: " + str(theTime[1]) + "/" + str(theTime[2]) + "/" + str(theTime[0]) + "/" + str(theTime[1]) + " " + str(theTime[3]) + ":" + str(theTime[4]) + "\n")
                     try:
                         await asyncio.gather(ble2.send_loop(), acknowledge(ble2))
@@ -217,7 +220,8 @@ async def main():
                 if b'DO' in doorData:
                     print("Door activity")
                     theTime = time.localtime()
-                    requests.post(notifyURL)
+                    notifyMessage = {"value1":"Door Sensor Activity"}
+                    requests.post(notifyURL, notifyMessage)
                     activityLog.write("Door activity: " + str(theTime[1]) + "/" + str(theTime[2]) + "/" + str(theTime[0]) + "/" + str(theTime[1]) + " " + str(theTime[3]) + ":" + str(theTime[4]) + "\n")
                     try:
                         await asyncio.gather(ble3.send_loop(), acknowledge(ble3))
@@ -296,13 +300,16 @@ async def main():
 
             #Health Check every 5 minutes
             if((time.time() - motionCheckInTime) > 300):
-                requests.post(notifyURL)
+                notifyMessage = {"value1":"Motion Sensor Connection Loss"}
+                requests.post(notifyURL, notifyMessage)
                 #WANT TO LOG IN FILE THAT HEALTH CHECK FAILED
 
             if((time.time() - windowCheckInTime) > 300):
-                requests.post(notifyURL)
+                notifyMessage = {"value1":"Window Sensor Connection Loss"}
+                requests.post(notifyURL, notifyMessage)
 
             if((time.time() - doorCheckInTime) > 300):
+                notifyMessage = {"value1":"Door Sensor Connection Loss"}
                 requests.post(notifyURL)
 
 if __name__ == "__main__":
