@@ -15,15 +15,9 @@ ble1 = None
 ble2 = None
 ble3 = None
 
-######################################################################
-#WHAT IS THE PLAN FOR PUSHING THE BUTTON TO ENABLE OR DISABLE DEVICES#
-######################################################################
 ###################################################################
 #Might need to separate the logic from the scanning and connecting#
 ###################################################################
-###################################################
-#ENSURE THAT ALL THE DEVICES ARE DISARMED OR ARMED#
-###################################################
 
 #This is called when the device receives data
 def motion_callback(value: bytes):
@@ -54,52 +48,70 @@ async def acknowledge(ble: BLE_interface):
 
 async def disarmMotion(ble: BLE_interface): #These are just for Motion right now
     global motionData
+    global MotionArmedState
     while not(b'A' in motionData):
         await asyncio.sleep(3.0)
         print("Sending disarm")
         ble.queue_send(b'DSM')
-    ble.disconnect()
+        if(b'A' in motionData):
+            MotionArmedState = False
+    await ble.disconnect()
 
 async def disarmDoor(ble: BLE_interface):
     print("We are in disarm")
     global doorData
+    global DoorArmedState
     while not(b'A' in doorData):
         await asyncio.sleep(3.0)
         print("Sending disarm")
         ble.queue_send(b'DSD')
+        if(b'A' in doorData):
+            DoorArmedState = False
     await ble.disconnect()
 
 async def disarmWindow(ble: BLE_interface):
     print("We are in disarm")
     global windowData
+    global WindowArmedState
     while not(b'A' in windowData):
         await asyncio.sleep(3.0)
         print("Sending disarm")
         ble.queue_send(b'PLACEHOLDER')
+        if(b'A' in windowData):
+            WindowArmedState = False
     await ble.disconnect()
 
 async def armMotion(ble: BLE_interface):
     global motionData
+    global MotionArmedState
     while not(b'A' in motionData):
         await asyncio.sleep(3.0)
         print("Sending arm")
         ble.queue_send(b'RSM')
+        if(b'A' in motionData):
+            MotionArmedState = True
     await ble.disconnect()
 
 async def armDoor(ble: BLE_interface):
     global doorData
+    global DoorArmedState
     while not(b'A' in doorData):
         await asyncio.sleep(3.0)
         print("Sending Arm")
         ble.queue_send(b'RSD')
+        if(b'A' in doorData):
+            DoorArmedState = True
     await ble.disconnect()
 
 async def armWindow(ble: BLE_interface):
     global windowData
+    global WindowArmedState
     while not(b'A' in windowData):
         await asyncio.sleep(3.0)
         print("Sending Arm")
         ble.queue_send(b'PLACEHOLDER')
+        if(b'A' in windowData):
+            WindowArmedState = True
     await ble.disconnect()
 
 async def connection(device, rwuuid, adapter, suuid):
@@ -127,8 +139,11 @@ async def main():
     doorData = b''
     activityLog = open("activityLog.txt", "a")
     PiArmedState = True
+    global MotionArmedState
     MotionArmedState = True
+    global WindowArmedState
     WindowArmedState = True
+    global DoorArmedState
     DoorArmedState = True
     notifyMessage = {'value1':"PLACEHOLDER"}
     notifyURL = 'https://maker.ifttt.com/trigger/Timeout/with/key/drkDV7BLk5F_sqrYTDTwbW'
@@ -156,7 +171,11 @@ async def main():
                 #Checking = False #Might not need this if it awaits for the connection
                 global ble1
                 motionCheckInTime = time.time()
-                ble1 = await connection(device1, uuid, ADAPTER, SERVICE_UUID)
+                try:
+                    ble1 = await connection(device1, uuid, ADAPTER, SERVICE_UUID)
+                except Exception as e:
+                    print("An error occurred", e)
+                    ble1.disconnect()
                 print(ble1)
             except KeyError:
                 print("Motion not found")
@@ -164,7 +183,11 @@ async def main():
                 print(devices[device2])
                 global ble2
                 windowCheckInTime = time.time()
-                ble2 = await connection(device2, uuid, ADAPTER, SERVICE_UUID)
+                try:
+                    ble2 = await connection(device2, uuid, ADAPTER, SERVICE_UUID)
+                except Exception as e:
+                    print("An error occurred", e)
+                    ble2.disconnect()
                 print(ble2)
             except KeyError:
                 print("Window not found")
@@ -172,7 +195,11 @@ async def main():
                 print(devices[device3])
                 global ble3
                 doorCheckInTime = time.time()
-                ble3 = await connection(device3, uuid, ADAPTER, SERVICE_UUID)
+                try:
+                    ble3 = await connection(device3, uuid, ADAPTER, SERVICE_UUID)
+                except Exception as e:
+                    print("An error occurred", e)
+                    ble3.disconnect()
                 print(ble3)
             except KeyError:
                 print("Door not found")
@@ -292,6 +319,7 @@ async def main():
                 if not(ble3 == None):
                     try:
                         await asyncio.gather(ble3.send_loop(), armDoor(ble3))
+                        DoorArmedState = True
                     except Exception as e:
                         print("An error occurred", e)
                         ble3.disconnect()
