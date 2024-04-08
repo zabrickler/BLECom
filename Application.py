@@ -18,19 +18,15 @@ ble3 = None
 ###################################################################
 #Might need to separate the logic from the scanning and connecting#
 ###################################################################
-
+######################################
+#REDUCE TIME BETWEEN SENDING MESSAGES#
+######################################
 #This is called when the device receives data
 def motion_callback(value: bytes):
     print("Motion Message", value)
     global motionData
     motionData = motionData + value
     print(motionData)
-
-def window_callback(value: bytes):
-    print("Window Message", value)
-    global windowData
-    windowData = windowData + value
-    print(windowData)
 
 def door_callback(value: bytes):
     print("Door Message", value)
@@ -69,18 +65,6 @@ async def disarmDoor(ble: BLE_interface):
             DoorArmedState = False
     await ble.disconnect()
 
-async def disarmWindow(ble: BLE_interface):
-    print("We are in disarm")
-    global windowData
-    global WindowArmedState
-    while not(b'A' in windowData):
-        await asyncio.sleep(3.0)
-        print("Sending disarm")
-        ble.queue_send(b'PLACEHOLDER')
-        if(b'A' in windowData):
-            WindowArmedState = False
-    await ble.disconnect()
-
 async def armMotion(ble: BLE_interface):
     global motionData
     global MotionArmedState
@@ -103,23 +87,10 @@ async def armDoor(ble: BLE_interface):
             DoorArmedState = True
     await ble.disconnect()
 
-async def armWindow(ble: BLE_interface):
-    global windowData
-    global WindowArmedState
-    while not(b'A' in windowData):
-        await asyncio.sleep(3.0)
-        print("Sending Arm")
-        ble.queue_send(b'PLACEHOLDER')
-        if(b'A' in windowData):
-            WindowArmedState = True
-    await ble.disconnect()
-
 async def connection(device, rwuuid, adapter, suuid):
     ble = BLE_interface(adapter, suuid)
     if(device == "44:B7:D0:2C:D3:0A"):
         ble.set_receiver(motion_callback)
-    elif(device == "44:B7:D0:2D:6A:B3"):
-        ble.set_receiver(window_callback)
     elif(device == "44:B7:D0:2C:D3:27"):
         ble.set_receiver(door_callback)
     try:
@@ -133,24 +104,23 @@ async def connection(device, rwuuid, adapter, suuid):
 async def main():
     global motionData
     motionData = b''
-    global windowData
-    windowData = b''
     global doorData
     doorData = b''
+    
     activityLog = open("activityLog.txt", "a")
+    
     PiArmedState = True
+
     global MotionArmedState
     MotionArmedState = True
-    global WindowArmedState
-    WindowArmedState = True
     global DoorArmedState
     DoorArmedState = True
+
     notifyMessage = {'value1':"PLACEHOLDER"}
     notifyURL = 'https://maker.ifttt.com/trigger/Timeout/with/key/drkDV7BLk5F_sqrYTDTwbW'
     dbURL = 'https://home-security-90ecb2cf8b83.herokuapp.com/securitystatus'
 
     doorCheckInTime = time.time()
-    windowCheckInTime = time.time()
     motionCheckInTime = time.time()
 
     ADAPTER = "hci0"
@@ -159,7 +129,6 @@ async def main():
     uuid = "49535343-1e4d-4bd9-ba61-23c647249616"
     Checking = True
     device1 = "44:B7:D0:2C:D3:0A" #Motion
-    device2 = "44:B7:D0:2D:6A:B3" #Window
     device3 = "44:B7:D0:2C:D3:27" #Door
 
     while True:
@@ -179,18 +148,7 @@ async def main():
                 print(ble1)
             except KeyError:
                 print("Motion not found")
-            try:
-                print(devices[device2])
-                global ble2
-                windowCheckInTime = time.time()
-                try:
-                    ble2 = await connection(device2, uuid, ADAPTER, SERVICE_UUID)
-                except Exception as e:
-                    print("An error occurred", e)
-                    ble2.disconnect()
-                print(ble2)
-            except KeyError:
-                print("Window not found")
+                
             try:
                 print(devices[device3])
                 global ble3
@@ -213,7 +171,7 @@ async def main():
                 PiArmedState = False
 
             #Armed and awaiting messages
-            if(PiArmedState and (MotionArmedState or WindowArmedState or DoorArmedState)):        
+            if(PiArmedState and (MotionArmedState or DoorArmedState)):        
                 if b'MD' in motionData:
                     print("Motion activity")
                     theTime = time.localtime()
@@ -221,28 +179,13 @@ async def main():
                     requests.post(notifyURL, notifyMessage)
                     activityLog.write("Motion activity: " + str(theTime[1]) + "/" + str(theTime[2]) + "/" + str(theTime[0]) + "/" + str(theTime[1]) + " " + str(theTime[3]) + ":" + str(theTime[4]) + "\n")
                     try:
-                        await asyncio.gather(ble1.send_loop(), acknowledge(ble1))
+                        await asyncio.gather(ble1.send_loop(), disarmMotion(ble1))
                     except bleak.BleakError as e:
                         print("Bleak error")
                     finally:
                         await ble1.disconnect()
                     motionData = b''
                     ble1 = None
-
-                if b'PLACEHOLDER' in windowData:
-                    print("Window activity")
-                    theTime = time.localtime()
-                    notifyMessage = {"value1":"Window Sensor Activity"}
-                    requests.post(notifyURL, notifyMessage)
-                    activityLog.write("Window activity: " + str(theTime[1]) + "/" + str(theTime[2]) + "/" + str(theTime[0]) + "/" + str(theTime[1]) + " " + str(theTime[3]) + ":" + str(theTime[4]) + "\n")
-                    try:
-                        await asyncio.gather(ble2.send_loop(), acknowledge(ble2))
-                    except bleak.BleakError as e:
-                        print("Bleak error")
-                    finally:
-                        await ble2.disconnect()
-                    windowData = b''
-                    ble2 = None
 
                 if b'DO' in doorData:
                     print("Door activity")
@@ -251,7 +194,7 @@ async def main():
                     requests.post(notifyURL, notifyMessage)
                     activityLog.write("Door activity: " + str(theTime[1]) + "/" + str(theTime[2]) + "/" + str(theTime[0]) + "/" + str(theTime[1]) + " " + str(theTime[3]) + ":" + str(theTime[4]) + "\n")
                     try:
-                        await asyncio.gather(ble3.send_loop(), acknowledge(ble3))
+                        await asyncio.gather(ble3.send_loop(), disarmDoor(ble3))
                     except bleak.BleakError as e:
                         print("Bleak error")
                     finally:
@@ -270,19 +213,7 @@ async def main():
                         ble1.disconnect()
                     motionData = b''
                     ble1 = None
-
-                if not(ble2 == None):
-                    try:
-                        await asyncio.gather(ble2.send_loop(), disarmWindow(ble2))
-                        WindowArmedState = False
-                    except Exception as e:
-                        print("An error occurred", e)
-                        ble2.disconnect()
-                    windowData = b''
-                    ble2 = None
-
-                print("Do we get here")
-                    
+   
                 if not(ble3 == None):
                     try:
                         await asyncio.gather(ble3.send_loop(), disarmDoor(ble3))
@@ -295,7 +226,7 @@ async def main():
                     ble3 = None
 
             #Rearming
-            if(PiArmedState and (not(MotionArmedState) or not(WindowArmedState) or not(DoorArmedState))):
+            if(PiArmedState and (not(MotionArmedState) or not(DoorArmedState))):
                 if not(ble1 == None):
                     try:
                         await asyncio.gather(ble1.send_loop(), armMotion(ble1))
@@ -305,17 +236,7 @@ async def main():
                         ble1.disconnect()
                     motionData = b''
                     ble1 = None
-                
-                if not(ble2 == None):
-                    try:
-                        await asyncio.gather(ble2.send_loop(), armWindow(ble2))
-                        WindowArmedState = True
-                    except Exception as e:
-                        print("An error occurred", e)
-                        ble2.disconnect()
-                    windowData = b''
-                    ble2 = None
-                
+
                 if not(ble3 == None):
                     try:
                         await asyncio.gather(ble3.send_loop(), armDoor(ble3))
@@ -331,10 +252,6 @@ async def main():
                 notifyMessage = {"value1":"Motion Sensor Connection Loss"}
                 requests.post(notifyURL, notifyMessage)
                 #WANT TO LOG IN FILE THAT HEALTH CHECK FAILED
-
-            if((time.time() - windowCheckInTime) > 300):
-                notifyMessage = {"value1":"Window Sensor Connection Loss"}
-                requests.post(notifyURL, notifyMessage)
 
             if((time.time() - doorCheckInTime) > 300):
                 notifyMessage = {"value1":"Door Sensor Connection Loss"}
