@@ -186,8 +186,8 @@ async def main():
                     activityLog.write("Motion activity: " + str(theTime[1]) + "/" + str(theTime[2]) + "/" + str(theTime[0]) + "/" + str(theTime[1]) + " " + str(theTime[3]) + ":" + str(theTime[4]) + "\n")
                     try:
                         await asyncio.gather(ble1.send_loop(), disarmMotion(ble1))
-                    except bleak.BleakError as e:
-                        print("Bleak error")
+                    except Exception as e:
+                        print("An error has occurred", e)
                     finally:
                         await ble1.disconnect()
                     motionData = b''
@@ -202,8 +202,8 @@ async def main():
                     activityLog.write("Door activity: " + str(theTime[1]) + "/" + str(theTime[2]) + "/" + str(theTime[0]) + "/" + str(theTime[1]) + " " + str(theTime[3]) + ":" + str(theTime[4]) + "\n")
                     try:
                         await asyncio.gather(ble3.send_loop(), disarmDoor(ble3))
-                    except bleak.BleakError as e:
-                        print("Bleak error")
+                    except Exception as e:
+                        print("An error has occurred", e)
                     finally:
                        await ble3.disconnect()
                     doorData = b''
