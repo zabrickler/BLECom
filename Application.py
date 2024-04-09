@@ -21,6 +21,9 @@ ble3 = None
 ######################################
 #REDUCE TIME BETWEEN SENDING MESSAGES#
 ######################################
+###################################################
+#MIGHT TRY ARM DISARM ONLY CERTAIN NUMBER OF TIMES#
+###################################################
 #This is called when the device receives data
 def motion_callback(value: bytes):
     print("Motion Message", value)
@@ -45,7 +48,10 @@ async def acknowledge(ble: BLE_interface):
 async def disarmMotion(ble: BLE_interface): #These are just for Motion right now
     global motionData
     global MotionArmedState
+    global ble1
     while not(b'A' in motionData):
+        if(ble1 == None):
+            break
         await asyncio.sleep(1.0)
         print("Sending disarm")
         ble.queue_send(b'DSM')
@@ -57,7 +63,10 @@ async def disarmDoor(ble: BLE_interface):
     print("We are in disarm")
     global doorData
     global DoorArmedState
+    global ble3
     while not(b'A' in doorData):
+        if(ble3 == None):
+            break
         await asyncio.sleep(1.0)
         print("Sending disarm")
         ble.queue_send(b'DSD')
@@ -68,7 +77,10 @@ async def disarmDoor(ble: BLE_interface):
 async def armMotion(ble: BLE_interface):
     global motionData
     global MotionArmedState
+    global ble1
     while not(b'A' in motionData):
+        if(ble1 == None):
+            break
         await asyncio.sleep(1.0)
         print("Sending arm")
         ble.queue_send(b'RSM')
@@ -79,7 +91,10 @@ async def armMotion(ble: BLE_interface):
 async def armDoor(ble: BLE_interface):
     global doorData
     global DoorArmedState
+    global ble3
     while not(b'A' in doorData):
+        if(ble3 == None):
+            break
         await asyncio.sleep(1.0)
         print("Sending Arm")
         ble.queue_send(b'RSD')
@@ -185,14 +200,11 @@ async def main():
                     motionTriggered = True
                     activityLog.write("Motion activity: " + str(theTime[1]) + "/" + str(theTime[2]) + "/" + str(theTime[0]) + "/" + str(theTime[1]) + " " + str(theTime[3]) + ":" + str(theTime[4]) + "\n")
                     try:
-                        motionTask = asyncio.create_task(disarmDoor(ble1))
                         await asyncio.gather(ble1.send_loop(), disarmMotion(ble1))
                     except Exception as e:
                         print("An error has occurred", e)
                         ble1.disconnect()
                     finally:
-                        if motionTask:
-                            motionTask.cancel()
                         await ble1.disconnect()
                     motionData = b''
                     ble1 = None
@@ -205,14 +217,11 @@ async def main():
                     doorTriggered = True
                     activityLog.write("Door activity: " + str(theTime[1]) + "/" + str(theTime[2]) + "/" + str(theTime[0]) + "/" + str(theTime[1]) + " " + str(theTime[3]) + ":" + str(theTime[4]) + "\n")
                     try:
-                        doorTask = asyncio.create_task(disarmDoor(ble3))
-                        await asyncio.gather(ble3.send_loop(), doorTask)
+                        await asyncio.gather(ble3.send_loop(), disarmDoor(ble3))
                     except Exception as e:
                         print("An error has occurred", e)
                         ble3.disconnect()
                     finally:
-                        if doorTask:
-                            doorTask.cancel()
                         await ble3.disconnect()
                     doorData = b''
                     ble3 = None
@@ -251,8 +260,7 @@ async def main():
                 if not(ble1 == None):
                     if(not(motionTriggered)):
                         try:
-                            motionTask = asyncio.create_task(armMotion(ble1))
-                            await asyncio.gather(ble1.send_loop(), motionTask)
+                            await asyncio.gather(ble1.send_loop(), armMotion(ble1))
                             MotionArmedState = True
                         except Exception as e:
                             print("An error occurred", e)
@@ -260,8 +268,6 @@ async def main():
                             ble1.disconnect()
                         finally:
                             ble1.stop_loop()
-                            if motionTask:
-                                motionTask.cancel()
                             ble1.disconnect()
                         motionData = b''
                         ble1 = None
@@ -269,8 +275,7 @@ async def main():
                 if not(ble3 == None):
                     if(not(doorTriggered)):
                         try:
-                            doorTask = asyncio.create_task(armDoor(ble1))
-                            await asyncio.gather(ble3.send_loop(), doorTask)
+                            await asyncio.gather(ble3.send_loop(), disarmDoor(ble3))
                             DoorArmedState = True
                         except Exception as e:
                             print("An error occurred", e)
@@ -278,8 +283,6 @@ async def main():
                             ble3.disconnect()
                         finally:
                             ble3.stop_loop()
-                            if doorTask:
-                                doorTask.cancel()
                             ble3.disconnect()
                         doorData = b''
                         ble3 = None
