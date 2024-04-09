@@ -185,11 +185,14 @@ async def main():
                     motionTriggered = True
                     activityLog.write("Motion activity: " + str(theTime[1]) + "/" + str(theTime[2]) + "/" + str(theTime[0]) + "/" + str(theTime[1]) + " " + str(theTime[3]) + ":" + str(theTime[4]) + "\n")
                     try:
+                        motionTask = asyncio.create_task(disarmDoor(ble1))
                         await asyncio.gather(ble1.send_loop(), disarmMotion(ble1))
                     except Exception as e:
                         print("An error has occurred", e)
                         ble1.disconnect()
                     finally:
+                        if motionTask:
+                            motionTask.cancel()
                         await ble1.disconnect()
                     motionData = b''
                     ble1 = None
@@ -202,12 +205,15 @@ async def main():
                     doorTriggered = True
                     activityLog.write("Door activity: " + str(theTime[1]) + "/" + str(theTime[2]) + "/" + str(theTime[0]) + "/" + str(theTime[1]) + " " + str(theTime[3]) + ":" + str(theTime[4]) + "\n")
                     try:
-                        await asyncio.gather(ble3.send_loop(), disarmDoor(ble3))
+                        doorTask = asyncio.create_task(disarmDoor(ble3))
+                        await asyncio.gather(ble3.send_loop(), doorTask)
                     except Exception as e:
                         print("An error has occurred", e)
                         ble3.disconnect()
                     finally:
-                       await ble3.disconnect()
+                        if doorTask:
+                            doorTask.cancel()
+                        await ble3.disconnect()
                     doorData = b''
                     ble3 = None
 
@@ -222,6 +228,8 @@ async def main():
                     except Exception as e:
                         print("An error occurred", e)
                         ble1.disconnect()
+                    finally:
+                        ble1.disconnect()
                     motionData = b''
                     ble1 = None
    
@@ -232,6 +240,8 @@ async def main():
                     except Exception as e:
                         print("An error occurred", e)
                         ble3.disconnect()
+                    finally:
+                        ble3.disconnect()
                     print(ble3) #This is to see the 
                     doorData = b''
                     ble3 = None
@@ -241,13 +251,17 @@ async def main():
                 if not(ble1 == None):
                     if(not(motionTriggered)):
                         try:
-                            await asyncio.gather(ble1.send_loop(), armMotion(ble1))
+                            motionTask = asyncio.create_task(armMotion(ble1))
+                            await asyncio.gather(ble1.send_loop(), motionTask)
                             MotionArmedState = True
                         except Exception as e:
                             print("An error occurred", e)
                             ble1.stop_loop()
                             ble1.disconnect()
                         finally:
+                            ble1.stop_loop()
+                            if motionTask:
+                                motionTask.cancel()
                             ble1.disconnect()
                         motionData = b''
                         ble1 = None
@@ -255,13 +269,17 @@ async def main():
                 if not(ble3 == None):
                     if(not(doorTriggered)):
                         try:
-                            await asyncio.gather(ble3.send_loop(), armDoor(ble3))
+                            doorTask = asyncio.create_task(armDoor(ble1))
+                            await asyncio.gather(ble3.send_loop(), doorTask)
                             DoorArmedState = True
                         except Exception as e:
                             print("An error occurred", e)
                             ble3.stop_loop()
                             ble3.disconnect()
                         finally:
+                            ble3.stop_loop()
+                            if doorTask:
+                                doorTask.cancel()
                             ble3.disconnect()
                         doorData = b''
                         ble3 = None
