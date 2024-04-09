@@ -164,7 +164,7 @@ async def main():
                     ble1 = await connection(device1, uuid, ADAPTER, SERVICE_UUID)
                 except Exception as e:
                     print("An error occurred", e)
-                    ble1.disconnect()
+                    await ble1.disconnect()
                 print(ble1)
             except KeyError:
                 print("Motion not found")
@@ -177,18 +177,21 @@ async def main():
                     ble3 = await connection(device3, uuid, ADAPTER, SERVICE_UUID)
                 except Exception as e:
                     print("An error occurred", e)
-                    ble3.disconnect()
+                    await ble3.disconnect()
                 print(ble3)
             except KeyError:
                 print("Door not found")
 
             response = requests.get(dbURL)
+            print(response)
             data = response.json()
+            print(data)
             ArmedStatus = data[0].get('status')
             if(ArmedStatus == 'Arm'):
                 PiArmedState = True
             elif(ArmedStatus == 'Disarm'):
                 PiArmedState = False
+            print(PiArmedState)
 
             #Armed and awaiting messages
             if(PiArmedState and (MotionArmedState or DoorArmedState)):        
@@ -203,7 +206,7 @@ async def main():
                         await asyncio.gather(ble1.send_loop(), disarmMotion(ble1))
                     except Exception as e:
                         print("An error has occurred", e)
-                        ble1.disconnect()
+                        await ble1.disconnect()
                     finally:
                         await ble1.disconnect()
                     motionData = b''
@@ -220,7 +223,7 @@ async def main():
                         await asyncio.gather(ble3.send_loop(), disarmDoor(ble3))
                     except Exception as e:
                         print("An error has occurred", e)
-                        ble3.disconnect()
+                        await ble3.disconnect()
                     finally:
                         await ble3.disconnect()
                     doorData = b''
@@ -236,9 +239,9 @@ async def main():
                         MotionArmedState = False
                     except Exception as e:
                         print("An error occurred", e)
-                        ble1.disconnect()
+                        await ble1.disconnect()
                     finally:
-                        ble1.disconnect()
+                        await ble1.disconnect()
                     motionData = b''
                     ble1 = None
    
@@ -248,9 +251,9 @@ async def main():
                         DoorArmedState = False
                     except Exception as e:
                         print("An error occurred", e)
-                        ble3.disconnect()
+                        await ble3.disconnect()
                     finally:
-                        ble3.disconnect()
+                        await ble3.disconnect()
                     print(ble3) #This is to see the 
                     doorData = b''
                     ble3 = None
@@ -265,25 +268,25 @@ async def main():
                         except Exception as e:
                             print("An error occurred", e)
                             ble1.stop_loop()
-                            ble1.disconnect()
+                            await ble1.disconnect()
                         finally:
                             ble1.stop_loop()
-                            ble1.disconnect()
+                            await ble1.disconnect()
                         motionData = b''
                         ble1 = None
 
                 if not(ble3 == None):
                     if(not(doorTriggered)):
                         try:
-                            await asyncio.gather(ble3.send_loop(), disarmDoor(ble3))
+                            await asyncio.gather(ble3.send_loop(), armDoor(ble3))
                             DoorArmedState = True
                         except Exception as e:
                             print("An error occurred", e)
                             ble3.stop_loop()
-                            ble3.disconnect()
+                            await ble3.disconnect()
                         finally:
                             ble3.stop_loop()
-                            ble3.disconnect()
+                            await ble3.disconnect()
                         doorData = b''
                         ble3 = None
 
