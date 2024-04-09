@@ -37,14 +37,6 @@ def door_callback(value: bytes):
     doorData = doorData + value
     print(doorData)
 
-#Sends back an acknowledgement when it receives activity
-async def acknowledge(ble: BLE_interface):
-    #while not(ble == None):
-    await asyncio.sleep(3.0)
-    print("Sending ack")
-    ble.queue_send(b'AAAAAAA')
-    await ble.disconnect()
-
 async def disarmMotion(ble: BLE_interface): #These are just for Motion right now
     global motionData
     global MotionArmedState
@@ -183,15 +175,12 @@ async def main():
                 print("Door not found")
 
             response = requests.get(dbURL)
-            print(response)
             data = response.json()
-            print(data)
             ArmedStatus = data[0].get('status')
             if(ArmedStatus == 'Arm'):
                 PiArmedState = True
             elif(ArmedStatus == 'Disarm'):
                 PiArmedState = False
-            print(PiArmedState)
 
             #Armed and awaiting messages
             if(PiArmedState and (MotionArmedState or DoorArmedState)):        
