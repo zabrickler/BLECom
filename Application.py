@@ -265,6 +265,8 @@ async def main():
                         finally:
                             ble1.stop_loop()
                             await ble1.disconnect()
+                            motionData = b''
+                            ble1 = None
                         motionData = b''
                         ble1 = None
 
@@ -280,6 +282,8 @@ async def main():
                         finally:
                             ble3.stop_loop()
                             await ble3.disconnect()
+                            doorData = b''
+                            ble3 = None
                         doorData = b''
                         ble3 = None
 
