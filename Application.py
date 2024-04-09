@@ -72,12 +72,14 @@ async def armMotion(ble: BLE_interface):
     global ble1
     while not(b'A' in motionData):
         if(ble1 == None):
+            ble1.stop_loop()
             break
         await asyncio.sleep(1.0)
         print("Sending arm")
         ble.queue_send(b'RSM')
         if(b'A' in motionData):
             MotionArmedState = True
+    ble.stop_loop()
     await ble.disconnect()
 
 async def armDoor(ble: BLE_interface):
@@ -86,12 +88,14 @@ async def armDoor(ble: BLE_interface):
     global ble3
     while not(b'A' in doorData):
         if(ble3 == None):
+            ble3.stop_loop()
             break
         await asyncio.sleep(1.0)
         print("Sending Arm")
         ble.queue_send(b'RSD')
         if(b'A' in doorData):
             DoorArmedState = True
+    ble.stop_loop()
     await ble.disconnect()
 
 async def connection(device, rwuuid, adapter, suuid):
