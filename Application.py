@@ -43,12 +43,14 @@ async def disarmMotion(ble: BLE_interface): #These are just for Motion right now
     global ble1
     while not(b'A' in motionData):
         if(ble1 == None):
+            ble1.stop_loop()
             break
         await asyncio.sleep(1.0)
         print("Sending disarm")
         ble.queue_send(b'DSM')
         if(b'A' in motionData):
             MotionArmedState = False
+    ble.stop_loop()
     await ble.disconnect()
 
 async def disarmDoor(ble: BLE_interface):
@@ -58,12 +60,14 @@ async def disarmDoor(ble: BLE_interface):
     global ble3
     while not(b'A' in doorData):
         if(ble3 == None):
+            ble3.stop_loop()
             break
         await asyncio.sleep(1.0)
         print("Sending disarm")
         ble.queue_send(b'DSD')
         if(b'A' in doorData):
             DoorArmedState = False
+    ble.stop_loop()
     await ble.disconnect()
 
 async def armMotion(ble: BLE_interface):
@@ -232,9 +236,13 @@ async def main():
                         MotionArmedState = False
                     except Exception as e:
                         print("An error occurred", e)
+                        ble1.stop_loop()
                         await ble1.disconnect()
                     finally:
+                        ble1.stop_loop()
                         await ble1.disconnect()
+                        motionData = b''
+                        ble1 = None
                     motionData = b''
                     ble1 = None
    
@@ -244,10 +252,13 @@ async def main():
                         DoorArmedState = False
                     except Exception as e:
                         print("An error occurred", e)
+                        ble3.stop_loop()
                         await ble3.disconnect()
                     finally:
+                        ble3.stop_loop()
                         await ble3.disconnect()
-                    print(ble3) #This is to see the 
+                        doorData = b''
+                        ble3 = None 
                     doorData = b''
                     ble3 = None
 
