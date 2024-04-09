@@ -115,6 +115,11 @@ async def main():
     MotionArmedState = True
     global DoorArmedState
     DoorArmedState = True
+    
+    global doorTriggered
+    doorTriggered = False
+    global motionTriggered
+    motionTriggered = False
 
     notifyMessage = {'value1':"PLACEHOLDER"}
     notifyURL = 'https://maker.ifttt.com/trigger/Timeout/with/key/drkDV7BLk5F_sqrYTDTwbW'
@@ -177,6 +182,7 @@ async def main():
                     theTime = time.localtime()
                     notifyMessage = {"value1":"Motion Sensor Activity"}
                     requests.post(notifyURL, notifyMessage)
+                    motionTriggered = True
                     activityLog.write("Motion activity: " + str(theTime[1]) + "/" + str(theTime[2]) + "/" + str(theTime[0]) + "/" + str(theTime[1]) + " " + str(theTime[3]) + ":" + str(theTime[4]) + "\n")
                     try:
                         await asyncio.gather(ble1.send_loop(), disarmMotion(ble1))
@@ -192,6 +198,7 @@ async def main():
                     theTime = time.localtime()
                     notifyMessage = {"value1":"Door Sensor Activity"}
                     requests.post(notifyURL, notifyMessage)
+                    doorTriggered = True
                     activityLog.write("Door activity: " + str(theTime[1]) + "/" + str(theTime[2]) + "/" + str(theTime[0]) + "/" + str(theTime[1]) + " " + str(theTime[3]) + ":" + str(theTime[4]) + "\n")
                     try:
                         await asyncio.gather(ble3.send_loop(), disarmDoor(ble3))
@@ -204,6 +211,8 @@ async def main():
 
             #Disarmed
             if(not(PiArmedState)):
+                doorTriggered = False
+                motionTriggered = False
                 if not(ble1 == None):
                     try:
                         await asyncio.gather(ble1.send_loop(), disarmMotion(ble1))
@@ -228,24 +237,26 @@ async def main():
             #Rearming
             if(PiArmedState and (not(MotionArmedState) or not(DoorArmedState))):
                 if not(ble1 == None):
-                    try:
-                        await asyncio.gather(ble1.send_loop(), armMotion(ble1))
-                        MotionArmedState = True
-                    except Exception as e:
-                        print("An error occurred", e)
-                        ble1.disconnect()
-                    motionData = b''
-                    ble1 = None
+                    if(not(motionTriggered)):
+                        try:
+                            await asyncio.gather(ble1.send_loop(), armMotion(ble1))
+                            MotionArmedState = True
+                        except Exception as e:
+                            print("An error occurred", e)
+                            ble1.disconnect()
+                        motionData = b''
+                        ble1 = None
 
                 if not(ble3 == None):
-                    try:
-                        await asyncio.gather(ble3.send_loop(), armDoor(ble3))
-                        DoorArmedState = True
-                    except Exception as e:
-                        print("An error occurred", e)
-                        ble3.disconnect()
-                    doorData = b''
-                    ble3 = None
+                    if(not(doorTriggered)):
+                        try:
+                            await asyncio.gather(ble3.send_loop(), armDoor(ble3))
+                            DoorArmedState = True
+                        except Exception as e:
+                            print("An error occurred", e)
+                            ble3.disconnect()
+                        doorData = b''
+                        ble3 = None
 
             #Health Check every 5 minutes
             if((time.time() - motionCheckInTime) > 300):
