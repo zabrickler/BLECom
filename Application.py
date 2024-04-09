@@ -188,6 +188,7 @@ async def main():
                         await asyncio.gather(ble1.send_loop(), disarmMotion(ble1))
                     except Exception as e:
                         print("An error has occurred", e)
+                        ble1.disconnect()
                     finally:
                         await ble1.disconnect()
                     motionData = b''
@@ -204,6 +205,7 @@ async def main():
                         await asyncio.gather(ble3.send_loop(), disarmDoor(ble3))
                     except Exception as e:
                         print("An error has occurred", e)
+                        ble3.disconnect()
                     finally:
                        await ble3.disconnect()
                     doorData = b''
