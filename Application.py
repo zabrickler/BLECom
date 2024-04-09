@@ -46,7 +46,7 @@ async def disarmMotion(ble: BLE_interface): #These are just for Motion right now
     global motionData
     global MotionArmedState
     while not(b'A' in motionData):
-        await asyncio.sleep(3.0)
+        await asyncio.sleep(1.0)
         print("Sending disarm")
         ble.queue_send(b'DSM')
         if(b'A' in motionData):
@@ -58,7 +58,7 @@ async def disarmDoor(ble: BLE_interface):
     global doorData
     global DoorArmedState
     while not(b'A' in doorData):
-        await asyncio.sleep(3.0)
+        await asyncio.sleep(1.0)
         print("Sending disarm")
         ble.queue_send(b'DSD')
         if(b'A' in doorData):
@@ -69,7 +69,7 @@ async def armMotion(ble: BLE_interface):
     global motionData
     global MotionArmedState
     while not(b'A' in motionData):
-        await asyncio.sleep(3.0)
+        await asyncio.sleep(1.0)
         print("Sending arm")
         ble.queue_send(b'RSM')
         if(b'A' in motionData):
@@ -80,7 +80,7 @@ async def armDoor(ble: BLE_interface):
     global doorData
     global DoorArmedState
     while not(b'A' in doorData):
-        await asyncio.sleep(3.0)
+        await asyncio.sleep(1.0)
         print("Sending Arm")
         ble.queue_send(b'RSD')
         if(b'A' in doorData):
@@ -243,6 +243,9 @@ async def main():
                             MotionArmedState = True
                         except Exception as e:
                             print("An error occurred", e)
+                            ble1.stop_loop()
+                            ble1.disconnect()
+                        finally:
                             ble1.disconnect()
                         motionData = b''
                         ble1 = None
@@ -254,6 +257,9 @@ async def main():
                             DoorArmedState = True
                         except Exception as e:
                             print("An error occurred", e)
+                            ble3.stop_loop()
+                            ble3.disconnect()
+                        finally:
                             ble3.disconnect()
                         doorData = b''
                         ble3 = None
