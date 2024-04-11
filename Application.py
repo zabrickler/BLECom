@@ -15,15 +15,6 @@ ble1 = None
 ble2 = None
 ble3 = None
 
-###################################################################
-#Might need to separate the logic from the scanning and connecting#
-###################################################################
-######################################
-#REDUCE TIME BETWEEN SENDING MESSAGES#
-######################################
-###################################################
-#MIGHT TRY ARM DISARM ONLY CERTAIN NUMBER OF TIMES#
-###################################################
 #This is called when the device receives data
 def motion_callback(value: bytes):
     print("Motion Message", value)
@@ -41,15 +32,14 @@ async def disarmMotion(ble: BLE_interface): #These are just for Motion right now
     global motionData
     global MotionArmedState
     global ble1
-    while not(b'A' in motionData):
-        if(ble1 == None):
-            ble1.stop_loop()
-            break
+    for i in range(10):
         await asyncio.sleep(1.0)
         print("Sending disarm")
         ble.queue_send(b'DSM')
-        if(b'A' in motionData):
+        if(ble1 == None or (b'A' in motionData)):
             MotionArmedState = False
+            ble1.stop_loop()
+            break
     ble.stop_loop()
     await ble.disconnect()
 
@@ -58,15 +48,14 @@ async def disarmDoor(ble: BLE_interface):
     global doorData
     global DoorArmedState
     global ble3
-    while not(b'A' in doorData):
-        if(ble3 == None):
-            ble3.stop_loop()
-            break
+    for i in range(10):
         await asyncio.sleep(1.0)
         print("Sending disarm")
         ble.queue_send(b'DSD')
-        if(b'A' in doorData):
+        if(ble3 == None or (b'A' in doorData)):
             DoorArmedState = False
+            ble3.stop_loop()
+            break
     ble.stop_loop()
     await ble.disconnect()
 
@@ -74,15 +63,14 @@ async def armMotion(ble: BLE_interface):
     global motionData
     global MotionArmedState
     global ble1
-    while not(b'A' in motionData):
-        if(ble1 == None):
-            ble1.stop_loop()
-            break
+    for i in range(10):
         await asyncio.sleep(1.0)
         print("Sending arm")
         ble.queue_send(b'RSM')
-        if(b'A' in motionData):
+        if(ble1 == None or (b'A' in motionData)):
             MotionArmedState = True
+            ble1.stop_loop()
+            break
     ble.stop_loop()
     await ble.disconnect()
 
@@ -90,15 +78,14 @@ async def armDoor(ble: BLE_interface):
     global doorData
     global DoorArmedState
     global ble3
-    while not(b'A' in doorData):
-        if(ble3 == None):
-            ble3.stop_loop()
-            break
+    for i in range(10):
         await asyncio.sleep(1.0)
         print("Sending Arm")
         ble.queue_send(b'RSD')
-        if(b'A' in doorData):
+        if(ble3 == None or (b'A' in doorData)):
             DoorArmedState = True
+            ble3.stop_loop()
+            break
     ble.stop_loop()
     await ble.disconnect()
 
@@ -168,19 +155,18 @@ async def main():
                 print(ble1)
             except KeyError:
                 print("Motion not found")
-                
-            try:
-                print(devices[device3])
-                global ble3
-                doorCheckInTime = time.time()
                 try:
-                    ble3 = await connection(device3, uuid, ADAPTER, SERVICE_UUID)
-                except Exception as e:
-                    print("An error occurred", e)
-                    await ble3.disconnect()
-                print(ble3)
-            except KeyError:
-                print("Door not found")
+                    print(devices[device3])
+                    global ble3
+                    doorCheckInTime = time.time()
+                    try:
+                        ble3 = await connection(device3, uuid, ADAPTER, SERVICE_UUID)
+                    except Exception as e:
+                        print("An error occurred", e)
+                        await ble3.disconnect()
+                    print(ble3)
+                except KeyError:
+                    print("Door not found")
 
             response = requests.get(dbURL)
             data = response.json()
