@@ -108,6 +108,7 @@ async def main():
     motionData = b''
     global doorData
     doorData = b''
+    MotionPriority = True
     
     activityLog = open("activityLog.txt", "a")
     
@@ -141,33 +142,62 @@ async def main():
     while True:
         while Checking:
             devices = await scanner.scan(ADAPTER, SCAN_TIME, SERVICE_UUID)
-    
-            try:
-                print(devices[device1])
-                #Checking = False #Might not need this if it awaits for the connection
-                global ble1
-                motionCheckInTime = time.time()
+
+            if(MotionPriority):
                 try:
-                    ble1 = await connection(device1, uuid, ADAPTER, SERVICE_UUID)
-                except Exception as e:
-                    print("An error occurred", e)
-                    await ble1.disconnect()
-                print(ble1)
-            except KeyError:
-                print("Motion not found")
+                    print(devices[device1])
+                    #Checking = False #Might not need this if it awaits for the connection
+                    global ble1
+                    motionCheckInTime = time.time()
+                    try:
+                        ble1 = await connection(device1, uuid, ADAPTER, SERVICE_UUID)
+                        MotionPriority = False
+                    except Exception as e:
+                        print("An error occurred", e)
+                        await ble1.disconnect()
+                    print(ble1)
+                except KeyError:
+                    print("Motion not found")
+                    try:
+                        print(devices[device3])
+                        global ble3
+                        doorCheckInTime = time.time()
+                        try:
+                            ble3 = await connection(device3, uuid, ADAPTER, SERVICE_UUID)
+                        except Exception as e:
+                            print("An error occurred", e)
+                            await ble3.disconnect()
+                        print(ble3)
+                    except KeyError:
+                        print("Door not found")
+            else:
                 try:
                     print(devices[device3])
                     global ble3
                     doorCheckInTime = time.time()
                     try:
                         ble3 = await connection(device3, uuid, ADAPTER, SERVICE_UUID)
+                        MotionPriority = True
                     except Exception as e:
                         print("An error occurred", e)
                         await ble3.disconnect()
                     print(ble3)
                 except KeyError:
                     print("Door not found")
-
+                    try:
+                        print(devices[device1])
+                        #Checking = False #Might not need this if it awaits for the connection
+                        global ble1
+                        motionCheckInTime = time.time()
+                        try:
+                            ble1 = await connection(device1, uuid, ADAPTER, SERVICE_UUID)
+                        except Exception as e:
+                            print("An error occurred", e)
+                            await ble1.disconnect()
+                        print(ble1)
+                    except KeyError:
+                        print("Motion not found")
+                    
             response = requests.get(dbURL)
             data = response.json()
             ArmedStatus = data[0].get('status')
