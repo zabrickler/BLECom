@@ -11,8 +11,9 @@ from ble_serial.bluetooth.ble_interface import BLE_interface
 import bleak
 import requests
 
+global ble1
 ble1 = None
-ble2 = None
+global ble3
 ble3 = None
 
 #This is called when the device receives data
