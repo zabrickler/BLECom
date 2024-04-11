@@ -105,6 +105,9 @@ async def connection(device, rwuuid, adapter, suuid):
     return ble
 
 async def main():
+    global ble1
+    global ble3
+
     global motionData
     motionData = b''
     global doorData
@@ -148,7 +151,6 @@ async def main():
                 try:
                     print(devices[device1])
                     #Checking = False #Might not need this if it awaits for the connection
-                    global ble1
                     motionCheckInTime = time.time()
                     try:
                         ble1 = await connection(device1, uuid, ADAPTER, SERVICE_UUID)
@@ -161,7 +163,6 @@ async def main():
                     print("Motion not found")
                     try:
                         print(devices[device3])
-                        global ble3
                         doorCheckInTime = time.time()
                         try:
                             ble3 = await connection(device3, uuid, ADAPTER, SERVICE_UUID)
@@ -174,7 +175,6 @@ async def main():
             else:
                 try:
                     print(devices[device3])
-                    global ble3
                     doorCheckInTime = time.time()
                     try:
                         ble3 = await connection(device3, uuid, ADAPTER, SERVICE_UUID)
@@ -188,7 +188,6 @@ async def main():
                     try:
                         print(devices[device1])
                         #Checking = False #Might not need this if it awaits for the connection
-                        global ble1
                         motionCheckInTime = time.time()
                         try:
                             ble1 = await connection(device1, uuid, ADAPTER, SERVICE_UUID)
