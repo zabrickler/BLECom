@@ -123,17 +123,20 @@ def get_status_armed():
     global motionTriggered
     motionTriggered = False
     while True:
-        response = requests.get(dbURL)
-        data = response.json()
-        ArmedStatus = data[0].get('status')
-        if(ArmedStatus == 'Arm'):
-            PiArmedState = True
-        elif(ArmedStatus == 'Disarm'):
-            PiArmedState = False
-            motionTriggered = False
-            doorTriggered = False
-            GPIO.output(17,GPIO.LOW)
-        time.sleep(0.5)
+        try:
+            response = requests.get(dbURL)
+            data = response.json()
+            ArmedStatus = data[0].get('status')
+            if(ArmedStatus == 'Arm'):
+                PiArmedState = True
+            elif(ArmedStatus == 'Disarm'):
+                PiArmedState = False
+                motionTriggered = False
+                doorTriggered = False
+                GPIO.output(17,GPIO.LOW)
+            time.sleep(1)
+        except Exception as e:
+            print("Error om status ", e)
 
 armState = threading.Thread(target=get_status_armed).start()
 
