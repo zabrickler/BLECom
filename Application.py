@@ -10,12 +10,13 @@ import logging
 from ble_serial.bluetooth.ble_interface import BLE_interface
 import bleak
 import requests
-
+import RPi.GPIO as GPIO
 global ble1
 ble1 = None
 global ble3
 ble3 = None
-
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(17,GPIO.OUT)
 #This is called when the device receives data
 def motion_callback(value: bytes):
     print("Motion Message", value)
@@ -213,6 +214,7 @@ async def main():
             #Armed and awaiting messages
             if(PiArmedState and (MotionArmedState or DoorArmedState)):        
                 if b'MD' in motionData:
+                    GPIO.output(17,GPIO.HIGH)
                     print("Motion activity")
                     theTime = time.localtime()
                     notifyMessage = {"value1":"Motion Sensor Activity"}
@@ -230,6 +232,7 @@ async def main():
                     ble1 = None
 
                 if b'DO' in doorData:
+                    GPIO.output(17,GPIO.HIGH)
                     print("Door activity")
                     theTime = time.localtime()
                     notifyMessage = {"value1":"Door Sensor Activity"}
