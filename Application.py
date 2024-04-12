@@ -109,6 +109,26 @@ async def connection(device, rwuuid, adapter, suuid):
     
     return ble
 
+def get_status_armed():
+    global response
+    global dbURL
+    global data
+    global PiArmedState
+    global doorTriggered
+    global motionTriggered
+    while True:
+        response = requests.get(dbURL)
+        data = response.json()
+        ArmedStatus = data[0].get('status')
+        if(ArmedStatus == 'Arm'):
+            PiArmedState = True
+        elif(ArmedStatus == 'Disarm'):
+            PiArmedState = False
+            motionTriggered = False
+            doorTriggered = False
+
+armState = threading.Thread(target=get_status_armed).start()
+
 async def main():
     global ble1
     global ble3
@@ -121,6 +141,7 @@ async def main():
     
     activityLog = open("activityLog.txt", "a")
     
+    global PiArmedState
     PiArmedState = True
 
     global MotionArmedState
@@ -135,6 +156,7 @@ async def main():
 
     notifyMessage = {'value1':"PLACEHOLDER"}
     notifyURL = 'https://maker.ifttt.com/trigger/Timeout/with/key/drkDV7BLk5F_sqrYTDTwbW'
+    global dbURL
     dbURL = 'https://home-security-90ecb2cf8b83.herokuapp.com/securitystatus'
 
     doorCheckInTime = time.time()
@@ -202,14 +224,6 @@ async def main():
                         print(ble1)
                     except KeyError:
                         print("Motion not found")
-                    
-            response = requests.get(dbURL)
-            data = response.json()
-            ArmedStatus = data[0].get('status')
-            if(ArmedStatus == 'Arm'):
-                PiArmedState = True
-            elif(ArmedStatus == 'Disarm'):
-                PiArmedState = False
 
             #Armed and awaiting messages
             if(PiArmedState and (MotionArmedState or DoorArmedState)):        
@@ -291,7 +305,7 @@ async def main():
                     if(not(motionTriggered)):
                         try:
                             await asyncio.gather(ble1.send_loop(), armMotion(ble1))
-                            MotionArmedState = True
+                            #MotionArmedState = True
                         except Exception as e:
                             print("An error occurred", e)
                             ble1.stop_loop()
