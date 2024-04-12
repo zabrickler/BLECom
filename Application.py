@@ -74,7 +74,7 @@ async def armMotion(ble: BLE_interface):
             break
         await asyncio.sleep(0.5)
         print("Sending arm")
-        ble.queue_send(b'RSM')
+        ble.queue_send(b'RSD')
         
     ble.stop_loop()
     await ble.disconnect()
@@ -270,7 +270,7 @@ async def main():
                 if not(ble1 == None):
                     try:
                         await asyncio.gather(ble1.send_loop(), disarmMotion(ble1))
-                        MotionArmedState = False
+                        #MotionArmedState = False
                     except Exception as e:
                         print("An error occurred", e)
                         ble1.stop_loop()
@@ -286,7 +286,7 @@ async def main():
                 if not(ble3 == None):
                     try:
                         await asyncio.gather(ble3.send_loop(), disarmDoor(ble3))
-                        DoorArmedState = False
+                        #DoorArmedState = False
                     except Exception as e:
                         print("An error occurred", e)
                         ble3.stop_loop()
@@ -322,7 +322,7 @@ async def main():
                     if(not(doorTriggered)):
                         try:
                             await asyncio.gather(ble3.send_loop(), armDoor(ble3))
-                            DoorArmedState = True
+                            #DoorArmedState = True
                         except Exception as e:
                             print("An error occurred", e)
                             ble3.stop_loop()
