@@ -34,13 +34,14 @@ async def disarmMotion(ble: BLE_interface): #These are just for Motion right now
     global MotionArmedState
     global ble1
     for i in range(10):
-        await asyncio.sleep(0.5)
-        print("Sending disarm")
-        ble.queue_send(b'DSM')
-        if(ble1 == None or (b'A' in motionData)):
+        if((b'A' in motionData)):
             MotionArmedState = False
             ble1.stop_loop()
             break
+        await asyncio.sleep(0.5)
+        print("Sending disarm")
+        ble.queue_send(b'DSM')
+        
     ble.stop_loop()
     await ble.disconnect()
 
@@ -50,13 +51,14 @@ async def disarmDoor(ble: BLE_interface):
     global DoorArmedState
     global ble3
     for i in range(10):
-        await asyncio.sleep(0.5)
-        print("Sending disarm")
-        ble.queue_send(b'DSD')
-        if(ble3 == None or (b'A' in doorData)):
+        if((b'A' in doorData)):
             DoorArmedState = False
             ble3.stop_loop()
             break
+        await asyncio.sleep(0.5)
+        print("Sending disarm")
+        ble.queue_send(b'DSD')
+        
     ble.stop_loop()
     await ble.disconnect()
 
@@ -65,13 +67,14 @@ async def armMotion(ble: BLE_interface):
     global MotionArmedState
     global ble1
     for i in range(10):
-        await asyncio.sleep(0.5)
-        print("Sending arm")
-        ble.queue_send(b'RSM')
-        if(ble1 == None or (b'A' in motionData)):
+        if((b'A' in motionData)):
             MotionArmedState = True
             ble1.stop_loop()
             break
+        await asyncio.sleep(0.5)
+        print("Sending arm")
+        ble.queue_send(b'RSM')
+        
     ble.stop_loop()
     await ble.disconnect()
 
@@ -80,13 +83,14 @@ async def armDoor(ble: BLE_interface):
     global DoorArmedState
     global ble3
     for i in range(10):
-        await asyncio.sleep(0.5)
-        print("Sending Arm")
-        ble.queue_send(b'RSD')
-        if(ble3 == None or (b'A' in doorData)):
+        if((b'A' in doorData)):
             DoorArmedState = True
             ble3.stop_loop()
             break
+        await asyncio.sleep(0.5)
+        print("Sending Arm")
+        ble.queue_send(b'RSD')
+        
     ble.stop_loop()
     await ble.disconnect()
 
