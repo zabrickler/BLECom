@@ -11,12 +11,14 @@ from ble_serial.bluetooth.ble_interface import BLE_interface
 import bleak
 import requests
 import RPi.GPIO as GPIO
+
 global ble1
 ble1 = None
 global ble3
 ble3 = None
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(17,GPIO.OUT)
+
 #This is called when the device receives data
 def motion_callback(value: bytes):
     print("Motion Message", value)
@@ -112,10 +114,14 @@ async def connection(device, rwuuid, adapter, suuid):
 def get_status_armed():
     global response
     global dbURL
+    dbURL = 'https://home-security-90ecb2cf8b83.herokuapp.com/securitystatus'
     global data
     global PiArmedState
+    PiArmedState = True
     global doorTriggered
+    doorTriggered = False
     global motionTriggered
+    motionTriggered = False
     while True:
         response = requests.get(dbURL)
         data = response.json()
@@ -126,6 +132,8 @@ def get_status_armed():
             PiArmedState = False
             motionTriggered = False
             doorTriggered = False
+            GPIO.output(17,GPIO.LOW)
+        time.sleep(0.5)
 
 armState = threading.Thread(target=get_status_armed).start()
 
@@ -339,11 +347,13 @@ async def main():
             if((time.time() - motionCheckInTime) > 300):
                 notifyMessage = {"value1":"Motion Sensor Connection Loss"}
                 requests.post(notifyURL, notifyMessage)
+                motionCheckInTime = time.time()
                 #WANT TO LOG IN FILE THAT HEALTH CHECK FAILED
 
             if((time.time() - doorCheckInTime) > 300):
                 notifyMessage = {"value1":"Door Sensor Connection Loss"}
-                requests.post(notifyURL)
+                requests.post(notifyURL, notifyMessage)
+                doorCheckInTime = time.time()
 
 if __name__ == "__main__":
     logging.basicConfig(level = logging.INFO)
