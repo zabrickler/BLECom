@@ -32,13 +32,17 @@ def door_callback(value: bytes):
     doorData = doorData + value
     print(doorData)
 
-async def disarmMotion(ble: BLE_interface): #These are just for Motion right now
+async def disarmMotion(ble: BLE_interface):
     global motionData
     global MotionArmedState
     global ble1
+    global notifyURL
+    notifyURL = 'https://maker.ifttt.com/trigger/Timeout/with/key/drkDV7BLk5F_sqrYTDTwbW'
     for i in range(10):
         if((b'A' in motionData)):
             MotionArmedState = False
+            notifyMessage = {"value1":"Motion Disarmed"}
+            requests.post(notifyURL, notifyMessage)
             ble1.stop_loop()
             break
         await asyncio.sleep(0.5)
@@ -53,9 +57,13 @@ async def disarmDoor(ble: BLE_interface):
     global doorData
     global DoorArmedState
     global ble3
+    global notifyURL
+    notifyURL = 'https://maker.ifttt.com/trigger/Timeout/with/key/drkDV7BLk5F_sqrYTDTwbW'
     for i in range(10):
         if((b'A' in doorData)):
             DoorArmedState = False
+            notifyMessage = {"value1":"Door Disarmed"}
+            requests.post(notifyURL, notifyMessage)
             ble3.stop_loop()
             break
         await asyncio.sleep(0.5)
@@ -69,9 +77,13 @@ async def armMotion(ble: BLE_interface):
     global motionData
     global MotionArmedState
     global ble1
+    global notifyURL
+    notifyURL = 'https://maker.ifttt.com/trigger/Timeout/with/key/drkDV7BLk5F_sqrYTDTwbW'
     for i in range(10):
         if((b'A' in motionData)):
             MotionArmedState = True
+            notifyMessage = {"value1":"Motion Armed"}
+            requests.post(notifyURL, notifyMessage)
             ble1.stop_loop()
             break
         await asyncio.sleep(0.5)
@@ -85,9 +97,13 @@ async def armDoor(ble: BLE_interface):
     global doorData
     global DoorArmedState
     global ble3
+    global notifyURL
+    notifyURL = 'https://maker.ifttt.com/trigger/Timeout/with/key/drkDV7BLk5F_sqrYTDTwbW'
     for i in range(10):
         if((b'A' in doorData)):
             DoorArmedState = True
+            notifyMessage = {"value1":"Door Armed"}
+            requests.post(notifyURL, notifyMessage)
             ble3.stop_loop()
             break
         await asyncio.sleep(0.5)
@@ -99,9 +115,9 @@ async def armDoor(ble: BLE_interface):
 
 async def connection(device, rwuuid, adapter, suuid):
     ble = BLE_interface(adapter, suuid)
-    if(device == "44:B7:D0:2C:D3:0A"):
-        ble.set_receiver(motion_callback)
-    elif(device == "44:B7:D0:2C:D3:27"):
+    if(device == "44:B7:D0:2C:D3:0A"): #Motion MAC Address
+        ble.set_receiver(motion_callback) 
+    elif(device == "44:B7:D0:2C:D3:27"): #Door MAC Address
         ble.set_receiver(door_callback)
     try:
         await ble.connect(device, "public", 10.0)
@@ -116,6 +132,7 @@ def get_status_armed():
     global dbURL
     dbURL = 'https://home-security-90ecb2cf8b83.herokuapp.com/securitystatus'
     global data
+
     global PiArmedState
     PiArmedState = True
     global doorTriggered
@@ -166,6 +183,7 @@ async def main():
     motionTriggered = False
 
     notifyMessage = {'value1':"PLACEHOLDER"}
+    global notifyURL
     notifyURL = 'https://maker.ifttt.com/trigger/Timeout/with/key/drkDV7BLk5F_sqrYTDTwbW'
     global dbURL
     dbURL = 'https://home-security-90ecb2cf8b83.herokuapp.com/securitystatus'
@@ -188,10 +206,9 @@ async def main():
             if(MotionPriority):
                 try:
                     print(devices[device1])
-                    #Checking = False #Might not need this if it awaits for the connection
-                    motionCheckInTime = time.time()
                     try:
                         ble1 = await connection(device1, uuid, ADAPTER, SERVICE_UUID)
+                        motionCheckInTime = time.time()
                         MotionPriority = False
                     except Exception as e:
                         print("An error occurred", e)
@@ -201,9 +218,9 @@ async def main():
                     print("Motion not found")
                     try:
                         print(devices[device3])
-                        doorCheckInTime = time.time()
                         try:
                             ble3 = await connection(device3, uuid, ADAPTER, SERVICE_UUID)
+                            doorCheckInTime = time.time()
                         except Exception as e:
                             print("An error occurred", e)
                             await ble3.disconnect()
@@ -213,9 +230,9 @@ async def main():
             else:
                 try:
                     print(devices[device3])
-                    doorCheckInTime = time.time()
                     try:
                         ble3 = await connection(device3, uuid, ADAPTER, SERVICE_UUID)
+                        doorCheckInTime = time.time()
                         MotionPriority = True
                     except Exception as e:
                         print("An error occurred", e)
@@ -225,10 +242,9 @@ async def main():
                     print("Door not found")
                     try:
                         print(devices[device1])
-                        #Checking = False #Might not need this if it awaits for the connection
-                        motionCheckInTime = time.time()
                         try:
                             ble1 = await connection(device1, uuid, ADAPTER, SERVICE_UUID)
+                            motionCheckInTime = time.time()
                         except Exception as e:
                             print("An error occurred", e)
                             await ble1.disconnect()
@@ -313,7 +329,7 @@ async def main():
             #Rearming
             if(PiArmedState and (not(MotionArmedState) or not(DoorArmedState))):
                 if not(ble1 == None):
-                    if(not(motionTriggered)):
+                    if(not(motionTriggered) and not(MotionArmedState)):
                         try:
                             await asyncio.gather(ble1.send_loop(), armMotion(ble1))
                             #MotionArmedState = True
@@ -330,7 +346,7 @@ async def main():
                         ble1 = None
 
                 if not(ble3 == None):
-                    if(not(doorTriggered)):
+                    if(not(doorTriggered) and not(DoorArmedState)):
                         try:
                             await asyncio.gather(ble3.send_loop(), armDoor(ble3))
                             #DoorArmedState = True
